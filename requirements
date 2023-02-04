@@ -1,0 +1,14 @@
+# conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch
+# conda install pytorch torchvision torchaudio cpuonly -c pytorch
+# pip3 install torch torchvision torchaudio
+
+pip install transformers
+pip install datasets
+pip install mlflow
+pip install sklearn
+pip install pandas
+pip install tqdm
+pip install pytrec_eval
+pip install tensorboard
+pip install matplotlib
+

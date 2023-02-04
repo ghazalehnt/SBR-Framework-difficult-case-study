@@ -1,0 +1,13 @@
+Config ->
+    dataset ->
+        name: CGR/todo
+        dataset_path: path do dataset
+        binary_interactions: true/false
+        batch_size: batch_size
+        user_text: todo
+        item_text: todo
+    trainer ->
+        optimizer: Adam/SGD
+        loss_fn: BCE/MSE
+        epochs: number of epochs
+        resume: true/false
