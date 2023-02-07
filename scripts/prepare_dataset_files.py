@@ -20,8 +20,14 @@ def fill_train_set(original_data_file, train_set_ids, output_path):
             r = json.loads(line)
             user_id = r[ORIGINAL_USER_ID_FIELD]
             item_id = r[ORIGINAL_ITEM_ID_FIELD]
-            for field in ADDITIONAL_INTERACTION_FIELDS:
-                interactions[user_id][item_id].append(r[field])
+            if user_id in interactions:
+                if item_id in interactions[user_id]:
+                    for field in ADDITIONAL_INTERACTION_FIELDS:
+                        if field in r:
+                            interactions[user_id][item_id].append(r[field].replace("'", "").replace('"', "").replace("\n", " "))
+                        else:
+                            interactions[user_id][item_id].append("")
+
 
     train_item_ids = []
     with open(output_path, 'w') as f:
@@ -58,7 +64,11 @@ def write_item_meta_file(item_metadata_file, output_file, all_item_ids):
             if item_id in all_item_ids:
                 metadata[item_id] = [item_id]
                 for field in ADDITIONAL_ITEM_FIELDS:
-                    metadata[item_id].append(r[field])
+                    if type(r[field]) == list:
+                        metadata[item_id].append(", ".join([i.strip() for i in r[field] if i.strip() != ""]).replace("[", "").replace("]", "").replace("'", "").replace('"', "").replace("\n", " "))
+                    else:
+                        metadata[item_id].append(r[field].replace("[", "").replace("]", "").replace("'", "").replace('"', "").replace("\n", " "))
+
 
     with open(output_file, 'w') as f:
         writer = csv.writer(f)
@@ -66,11 +76,7 @@ def write_item_meta_file(item_metadata_file, output_file, all_item_ids):
         header.extend(ADDITIONAL_ITEM_FIELDS)
         writer.writerow(header)
         for item_id in all_item_ids:
-            if item_id in metadata:
-                writer.writerow(metadata[item_id])
-            else:
-                print("item id not in item metadata file")
-                writer.writerow([item_id] + ['' for i in ADDITIONAL_ITEM_FIELDS])
+            writer.writerow(metadata[item_id])
 
 
 def write_user_meta_file(output_file, all_user_ids):
@@ -98,7 +104,7 @@ if __name__ == "__main__":
     ADDITIONAL_INTERACTION_FIELDS = ["reviewText", "summary"]
     ADDITIONAL_ITEM_FIELDS = ["title", "description", "category", "brand"]
 
-    item_ids, user_ids = fill_train_set(join(ORIGINAL_ITEM_ID_FIELD, "Books.json.gz"),
+    item_ids, user_ids = fill_train_set(join(ORIGINAL_DATASET_PATH, "Books.json.gz"),
                                         join(SPLIT_IDS_PATH, "train_ids.csv"),
                                         join(OUTPUT_PATH, "train.csv"))
 
