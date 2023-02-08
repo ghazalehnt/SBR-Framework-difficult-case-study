@@ -6,17 +6,15 @@ from os.path import join
 
 import torch
 import numpy as np
-from torch.utils.tensorboard import SummaryWriter
 
 from SBR.trainer.supervised import SupervisedTrainer
 from SBR.utils.data_loading import load_data
 from SBR.utils.others import get_model
-from SBR.trainer.unsupervised import UnSupervisedTrainer
 from SBR.utils.statics import get_profile, map_user_item_text
 
 
-def main(op, config_file=None, result_folder=None, given_user_text_filter=None, given_limit_training_data=None,
-         given_neg_files=None, given_lr=None, given_tbs=None, given_user_text=None, given_item_text=None):
+def main(op, config_file=None, result_folder=None, given_test_neg_file=None,
+         given_lr=None, given_tbs=None, given_user_text=None, given_item_text=None):
     random.seed(42)
     np.random.seed(42)
     torch.manual_seed(42)
@@ -25,12 +23,8 @@ def main(op, config_file=None, result_folder=None, given_user_text_filter=None, 
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     test_only = False
-    if op in ["train", "trainonly"]:
+    if op in ["train"]:
         config = json.load(open(config_file, 'r'))
-        if given_user_text_filter is not None:
-            config['dataset']['user_text_filter'] = given_user_text_filter
-        if given_limit_training_data is not None:
-            config['dataset']['limit_training_data'] = given_limit_training_data
         if given_lr is not None:
             config['trainer']['lr'] = given_lr
         if given_tbs is not None:
@@ -73,45 +67,22 @@ def main(op, config_file=None, result_folder=None, given_user_text_filter=None, 
         # check if the exp dir exists, the config file is the same as given.
         if os.path.exists(join(exp_dir, "config.json")):
             config2 = json.load(open(join(exp_dir, "config.json"), 'r'))
-#            # TODO: remove later, now for running experiments, enough logging:
-#            config2["dataset"]["load_user_item_text"] =  config["dataset"]["load_user_item_text"] 
             if config != config2:
                 raise ValueError(f"{exp_dir} exists with different config != {config_file}")
         os.makedirs(exp_dir, exist_ok=True)
         json.dump(config, open(join(exp_dir, "config.json"), 'w'), indent=4)
     elif op == "test":
         config = json.load(open(join(result_folder, "config.json"), 'r'))
-        # TODO: this should also be removed, it was written to accomodate earlier runs
-        if "chunk_size" in config["dataset"]:
-            if "user_chunk_size" not in config["dataset"]:
-                config["dataset"]["user_chunk_size"] = config["dataset"]["chunk_size"] 
-            if "item_chunk_size" not in config["dataset"]:
-                config["dataset"]["item_chunk_size"] = config["dataset"]["chunk_size"]
-        ###
         test_only = True
         exp_dir = config["experiment_dir"]
-        if given_neg_files["validation"] is not None:
-            config["dataset"]["validation_neg_sampling_strategy"] = given_neg_files["validation"]
-        if given_neg_files["test"] is not None:
-            config["dataset"]["test_neg_sampling_strategy"] = given_neg_files["test"]
+        if given_test_neg_file is not None:
+            config["dataset"]["test_neg_sampling_strategy"] = given_test_neg_file
         config["dataset"]["load_user_item_text"] = False
     else:
         raise ValueError("op not defined!")
 
-    # todo do we need all of these??? dts
-    logger = SummaryWriter(exp_dir)
-    for k, v in config["dataset"].items():
-        logger.add_text(f"dataset/{k}", str(v))
-    for k, v in config["trainer"].items():
-        logger.add_text(f"trainer/{k}", str(v))
-    for k, v in config["model"].items():
-        logger.add_text(f"model/{k}", str(v))
-    logger.add_text("exp_dir", exp_dir)
     print("experiment_dir:")
     print(exp_dir)
-
-#    # TODO: remove later, now for running experiments, enough logging:
-#    config["dataset"]["load_user_item_text"] = False
 
     train_dataloader, valid_dataloader, test_dataloader, users, items, relevance_level, padding_token = \
         load_data(config['dataset'],
@@ -124,38 +95,20 @@ def main(op, config_file=None, result_folder=None, given_user_text_filter=None, 
     model = get_model(config['model'], users, items, device, config['dataset'])
     print("Get model Done!")
 
-    if config['trainer']['optimizer'] == "":
-        trainer = UnSupervisedTrainer(config=config['trainer'], model=model, device=device, logger=logger,
-                                    exp_dir=exp_dir,
-                                    relevance_level=relevance_level,
-                                    users=users, items=items,
-                                    dataset_eval_neg_sampling=
-                                    {"validation": config["dataset"]["validation_neg_sampling_strategy"],
-                                     "test": config["dataset"]["test_neg_sampling_strategy"]})
-        trainer.evaluate(test_dataloader, valid_dataloader)
-    else:
-        trainer = SupervisedTrainer(config=config['trainer'], model=model, device=device, logger=logger, exp_dir=exp_dir,
-                                test_only=test_only, relevance_level=relevance_level,
-                                users=users, items=items,
-                                dataset_eval_neg_sampling=
-                                {"validation": config["dataset"]["validation_neg_sampling_strategy"],
-                                 "test": config["dataset"]["test_neg_sampling_strategy"]})
-        if op == "train":
-            trainer.fit(train_dataloader, valid_dataloader)
-            trainer.evaluate(test_dataloader, valid_dataloader)
-        elif op == "trainonly":
-            trainer.fit(train_dataloader, valid_dataloader)
-        elif op == "test":
-            trainer.evaluate(test_dataloader, valid_dataloader)
+    trainer = SupervisedTrainer(config=config['trainer'], model=model, device=device, exp_dir=exp_dir,
+                            test_only=test_only, relevance_level=relevance_level,
+                            users=users, items=items,
+                            test_eval_file_name=config["dataset"]["test_neg_sampling_strategy"] if "test_neg_sampling_strategy" in config["dataset"] else None)
+    if op == "train":
+        trainer.fit(train_dataloader, valid_dataloader)
+    elif op == "test":
+        trainer.evaluate(test_dataloader)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_file', '-c', type=str, default=None, help='config file, to train')
     parser.add_argument('--result_folder', '-r', type=str, default=None, help='result forler, to evaluate')
-    parser.add_argument('--user_text_filter', type=str, default=None, help='user_text_filter used only if given, otherwise read from the config')
-    parser.add_argument('--limit_training_data', '-l', type=str, default=None, help='the file name containing the limited training data')
-    parser.add_argument('--testtime_validation_neg_strategy', '-v', default=None, help='valid neg strategy, only for op == test')
     parser.add_argument('--testtime_test_neg_strategy', '-t', default=None, help='test neg strategy, only for op == test')
     parser.add_argument('--trainer_lr', default=None, help='trainer learning rate')
     parser.add_argument('--train_batch_size', default=None, help='train_batch_size')
@@ -164,15 +117,14 @@ if __name__ == '__main__':
     parser.add_argument('--op', type=str, help='operation train/test/trainonly')
     args, _ = parser.parse_known_args()
 
-    if args.op in ["train", "trainonly"]:
+    if args.op in ["train"]:
         if not os.path.exists(args.config_file):
             raise ValueError(f"Config file does not exist: {args.config_file}")
         if args.result_folder:
             raise ValueError(f"OP==train does not accept result_folder")
         if args.testtime_validation_neg_strategy or args.testtime_test_neg_strategy:
             raise ValueError(f"OP==train does not accept test-time eval neg strategies.")
-        main(op=args.op, config_file=args.config_file, given_user_text_filter=args.user_text_filter,
-             given_limit_training_data=args.limit_training_data,
+        main(op=args.op, config_file=args.config_file,
              given_lr=float(args.trainer_lr) if args.trainer_lr is not None else args.trainer_lr,
              given_tbs=int(args.train_batch_size) if args.train_batch_size is not None else args.train_batch_size,
              given_user_text=args.user_text, given_item_text=args.item_text)
@@ -182,7 +134,6 @@ if __name__ == '__main__':
         if args.config_file:
             raise ValueError(f"OP==test does not accept config_file")
         main(op=args.op, result_folder=args.result_folder,
-             given_neg_files={"validation": args.testtime_validation_neg_strategy,
-                              "test": args.testtime_test_neg_strategy})
+             given_test_neg_file=args.testtime_test_neg_strategy)
 
 

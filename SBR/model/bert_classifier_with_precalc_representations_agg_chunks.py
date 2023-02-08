@@ -52,17 +52,6 @@ class ClassifierUserTextProfileItemTextProfilePrecalculatedAggChunks(torch.nn.Mo
         max_num_chunks_user = dataset_config['max_num_chunks_user']
         max_num_chunks_item = dataset_config['max_num_chunks_item']
 
-        # if "use_random_reps" in model_config and model_config["use_random_reps"] is True:
-        #     self.chunk_user_reps = {}
-        #     for c in range(max_num_chunks_user):
-        #         self.chunk_user_reps[c] = torch.nn.Embedding(n_users, 768, device=device)
-        #         self.chunk_user_reps[c].requires_grad_(False)
-        #
-        #     self.chunk_item_reps = {}
-        #     for c in range(max_num_chunks_item):
-        #         self.chunk_item_reps[c] = torch.nn.Embedding(n_items, 768, device=device)
-        #         self.chunk_item_reps[c].requires_grad_(False)
-        # else:
         cf_emb_dim = ""
         if model_config["use_CF"]:
             cf_emb_dim = f"_MF-{model_config['CF_embedding_dim']}"
@@ -134,7 +123,6 @@ class ClassifierUserTextProfileItemTextProfilePrecalculatedAggChunks(torch.nn.Mo
                     else:
                         raise NotImplementedError()
             self.chunk_user_reps[c] = torch.nn.Embedding.from_pretrained(torch.concat(ch_rep), freeze=model_config['freeze_prec_reps'])
-#            self.chunk_user_reps[c].to(device)
 
         self.chunk_item_reps = {}
         for c in range(max_num_chunks_item):
@@ -148,14 +136,12 @@ class ClassifierUserTextProfileItemTextProfilePrecalculatedAggChunks(torch.nn.Mo
                     else:
                         raise NotImplementedError()
             self.chunk_item_reps[c] = torch.nn.Embedding.from_pretrained(torch.concat(ch_rep), freeze=model_config['freeze_prec_reps'])
-#            self.chunk_item_reps[c].to(device)
 
     def forward(self, batch):
         # batch -> chunks * batch_size * tokens
         user_ids = batch[INTERNAL_USER_ID_FIELD].squeeze(1)
         item_ids = batch[INTERNAL_ITEM_ID_FIELD].squeeze(1)
 
-        # todo for users/items who had fewer than max-chunks, I put their chunk[0] for the missing chunks, so the output would be same az 0, max pooling gets chunk0
         chunk_device = self.chunk_user_reps[0].weight.device
         if chunk_device.__str__() == 'cpu':
             id_temp = user_ids.cpu()
@@ -166,7 +152,6 @@ class ClassifierUserTextProfileItemTextProfilePrecalculatedAggChunks(torch.nn.Mo
                 user_ch_rep = user_ch_rep.to(self.device)
             else:
                 user_ch_rep = self.chunk_user_reps[c](user_ids)
-#            user_ch_rep = self.chunk_user_reps[c](user_ids)
             if self.use_ffn:
                 if self.append_cf_ffn:
                     user_ch_rep = torch.cat([user_ch_rep, self.user_embedding_CF(user_ids)], dim=1)
@@ -184,7 +169,6 @@ class ClassifierUserTextProfileItemTextProfilePrecalculatedAggChunks(torch.nn.Mo
                 item_ch_rep = item_ch_rep.to(self.device)
             else:
                 item_ch_rep = self.chunk_item_reps[c](item_ids)          
-#            item_ch_rep = self.chunk_item_reps[c](item_ids)
             if self.use_ffn:
                 if self.append_cf_ffn:
                     item_ch_rep = torch.cat([item_ch_rep, self.item_embedding_CF(item_ids)], dim=1)

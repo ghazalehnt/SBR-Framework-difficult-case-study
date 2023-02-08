@@ -1,4 +1,3 @@
-# how to do when micro averaging in cross validation ask andrew (do micro for each fold and then avg? or "concat" all results and do micro for all?)
 import json
 from collections import defaultdict
 
@@ -16,8 +15,6 @@ ranking_metrics = [
     "recip_rank"
 ]
 
-# TODO later remove the things with the weighted eval, such as using sklearn for ndcg... ??
-
 
 def calculate_metrics(ground_truth, prediction_scores, users, items, relevance_level, given_ranking_metrics=None):
     # # qid= user1:{ item1:1 } ...
@@ -31,8 +28,6 @@ def calculate_metrics(ground_truth, prediction_scores, users, items, relevance_l
         else:
             gt[str(users[i])][str(items[i])] = float(ground_truth[i])
             pd[str(users[i])][str(items[i])] = float(prediction_scores[i])
-        # if ground_truth[i] != 0 and ground_truth[i] < min_not_zero:
-        #     min_not_zero = ground_truth[i]
     return calculate_ranking_metrics_macro_avg_over_qid(gt, pd, relevance_level, given_ranking_metrics, calc_pytrec=False)
 
 
@@ -136,6 +131,7 @@ def log_results(ground_truth, prediction_scores, internal_user_ids, internal_ite
     json.dump({"predicted": pd}, open(output_path_predicted, 'w'))
     json.dump({"ground_truth": gt}, open(output_path_ground_truth, 'w'))
     cnt = 0
+    ## logging 100 output results to see how they look, if the log file is given:
     if output_path_log is not None and 'text' in ex_users.columns:
         with open(output_path_log, "w") as f:
             for user_id in gt.keys():

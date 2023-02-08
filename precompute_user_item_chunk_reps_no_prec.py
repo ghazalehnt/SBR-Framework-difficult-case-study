@@ -16,18 +16,13 @@ from SBR.utils.statics import INTERNAL_USER_ID_FIELD, INTERNAL_ITEM_ID_FIELD, ge
 BERT_DIM = 768
 
 
-def main(config_file, given_user_text_filter=None, given_limit_training_data=None,
-         given_user_text=None, given_item_text=None, calc_which=None):
+def main(config_file, given_user_text=None, given_item_text=None, calc_which=None):
     np.random.seed(42)
     torch.manual_seed(42)
     torch.cuda.manual_seed(42)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     config = json.load(open(config_file, 'r'))
-    if given_user_text_filter is not None:
-        config['dataset']['user_text_filter'] = given_user_text_filter
-    if given_limit_training_data is not None:
-        config['dataset']['limit_training_data'] = given_limit_training_data
     if given_user_text is not None:
         config['dataset']['user_text'] = get_profile(config['dataset']['name'], given_user_text)
     if given_item_text is not None:
@@ -209,23 +204,17 @@ def create_representations(bert, bert_embeddings, info, padding_token, device, b
                 mask = att_mask.unsqueeze(-1).expand(tokens_embeddings.size()).float()
                 tokens_embeddings = tokens_embeddings * mask
                 sum_tokons = torch.sum(tokens_embeddings, dim=1)
-                # summed_mask = torch.clamp(mask.sum(1), min=1e-9)  -> I see the point, but it's better to leave it as is to find the errors as in our case there should be something
                 temp = sum_tokons / att_mask.sum(1) # divide by how many tokens (1s) are in the att_mask
             else:
                 raise ValueError(f"agg_strategy not implemented {agg_strategy}")
             outputs.append(temp)
         reps[ex_id] = outputs
-        # reps.append(outputs)
     return reps
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_file', '-c', type=str, default=None, help='config file, to train')
-    parser.add_argument('--user_text_filter', type=str, default=None,
-                        help='user_text_filter used only if given, otherwise read from the config')
-    parser.add_argument('--limit_training_data', '-l', type=str, default=None,
-                        help='the file name containing the limited training data')
     parser.add_argument('--user_text', default=None, help='user_text (tg,tgr,tc,tcsr)')
     parser.add_argument('--item_text', default=None, help='item_text (tg,tgd,tc,tcd)')
     parser.add_argument('--which', default=None, help='if specified, only calculate user/item reps otherwhise both.')
@@ -233,6 +222,5 @@ if __name__ == '__main__':
 
     if not os.path.exists(args.config_file):
         raise ValueError(f"Config file does not exist: {args.config_file}")
-    main(config_file=args.config_file, given_user_text_filter=args.user_text_filter,
-         given_limit_training_data=args.limit_training_data,
-         given_user_text=args.user_text, given_item_text=args.item_text, calc_which=args.which)
+    main(config_file=args.config_file, given_user_text=args.user_text,
+         given_item_text=args.item_text, calc_which=args.which)
