@@ -142,7 +142,7 @@ if __name__ == "__main__":
     random.seed(42)
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_folder', type=str, help='path to dataset')
-    parser.add_argument('set', type=str, help='test or validation')
+    parser.add_argument('--set', type=str, help='test or validation')
     parser.add_argument('--ns', type=int, help='number of negative samples')
     parser.add_argument('--gf', type=str, help='genre field')
     args, _ = parser.parse_known_args()
