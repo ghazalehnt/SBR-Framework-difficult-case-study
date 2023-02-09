@@ -9,3 +9,10 @@
 4- You should have the following files in the same directory: train.csv, validation.csv, test.csv, items.csv, users.csv, and the files with negative samples.
 
 
+#### Pre-compute user and item textual representations:
+
+
+#### Train:
+
+
+#### Evaluate:
