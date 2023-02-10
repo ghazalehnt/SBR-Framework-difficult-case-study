@@ -31,12 +31,6 @@ def main(config_file, given_user_text=None, given_item_text=None, calc_which=Non
         raise ValueError("There is a bug when the batch size is bigger than one. Users/items with only one chunk"
                          "are producing wrong reps. Please set the batch size to 1.")
 
-    if "<DATA_ROOT_PATH" in config["dataset"]["dataset_path"]:
-        DATA_ROOT_PATH = config["dataset"]["dataset_path"][config["dataset"]["dataset_path"].index("<"):
-                                                           config["dataset"]["dataset_path"].index(">") + 1]
-        config["dataset"]["dataset_path"] = config["dataset"]["dataset_path"] \
-            .replace(DATA_ROOT_PATH, open(f"data/paths_vars/{DATA_ROOT_PATH[1:-1]}").read().strip())
-
     if 'max_num_chunks_user' in config['dataset'] or 'max_num_chunks_item' in config['dataset']:
         raise ValueError("max num chunks should not be set")
     if 'chunk_agg_strategy' in config['model']:

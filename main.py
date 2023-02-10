@@ -33,14 +33,6 @@ def main(op, config_file=None, result_folder=None, given_test_neg_file=None,
             config['dataset']['user_text'] = get_profile(config['dataset']['name'], given_user_text)
         if given_item_text is not None:
             config['dataset']['item_text'] = get_profile(config['dataset']['name'], given_item_text)
-        if "<DATA_ROOT_PATH" in config["dataset"]["dataset_path"]:
-            DATA_ROOT_PATH = config["dataset"]["dataset_path"][config["dataset"]["dataset_path"].index("<"):
-                             config["dataset"]["dataset_path"].index(">")+1]
-            config["dataset"]["dataset_path"] = config["dataset"]["dataset_path"]\
-                .replace(DATA_ROOT_PATH, open(f"data/paths_vars/{DATA_ROOT_PATH[1:-1]}").read().strip())
-        if "<EXP_ROOT_PATH>" in config["experiment_root"]:
-            config["experiment_root"] = config["experiment_root"]\
-                .replace("<EXP_ROOT_PATH>", open("data/paths_vars/EXP_ROOT_PATH").read().strip())
         print(config)
         exp_dir_params = []
         for param in config['params_in_exp_dir']:
