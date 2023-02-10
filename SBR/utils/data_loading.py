@@ -584,7 +584,7 @@ def load_split_dataset(config, for_precalc=False):
 
                 temp = df[user_inter_merge_fields].\
                     merge(item_info[user_item_merge_fields], on=INTERNAL_ITEM_ID_FIELD)
-                if sort_reviews.startswith("pos_rating_sorted_"):
+                if sort_reviews is not None and sort_reviews.startswith("pos_rating_sorted_"):
                     pos_threshold = int(sort_reviews[sort_reviews.rindex("_") + 1:])
                     temp = temp[temp['rating'] >= pos_threshold]
                 # before sorting them based on rating, etc., let's append each row's field together (e.g. title. genres. review.)
@@ -624,7 +624,7 @@ def load_split_dataset(config, for_precalc=False):
 
                 temp = df[item_inter_merge_fields]. \
                     merge(user_info[item_user_merge_fields], on=INTERNAL_USER_ID_FIELD)
-                if sort_reviews.startswith("pos_rating_sorted_"):
+                if sort_reviews is not None and sort_reviews.startswith("pos_rating_sorted_"):
                     pos_threshold = int(sort_reviews[sort_reviews.rindex("_") + 1:])
                     temp = temp[temp['rating'] >= pos_threshold]
                 # before sorting them based on rating, etc., let's append each row's field together
