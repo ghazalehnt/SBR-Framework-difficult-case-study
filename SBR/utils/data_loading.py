@@ -548,24 +548,26 @@ def load_split_dataset(config, for_precalc=False):
         df = df.merge(item_info[["item_id", INTERNAL_ITEM_ID_FIELD]], "left", on="item_id")
         df = df.drop(columns=["user_id", "item_id"])
 
-        df = df.rename(
-            columns={field[field.index("interaction.") + len("interaction."):]: field for field in user_text_fields if
-                     "interaction." in field})
-        df = df.rename(
-            columns={field[field.index("interaction.") + len("interaction."):]: field for field in item_text_fields if
-                     "interaction." in field})
-
-        for field in user_text_fields:
-            if "interaction." in field:
-                df[field] = df[field].fillna('')
-
-        # concat and move the user/item text fields to user and item info:
-        sort_reviews = None
-        if len(user_text_fields) > 0:
-            if 'user_item_text_choice' in config and len(config['user_item_text_choice']) > 0:
-                sort_reviews = config['user_item_text_choice']
         # text profile:
         if sp == 'train':
+            df = df.rename(
+                columns={field[field.index("interaction.") + len("interaction."):]: field for field in user_text_fields
+                         if
+                         "interaction." in field})
+            df = df.rename(
+                columns={field[field.index("interaction.") + len("interaction."):]: field for field in item_text_fields
+                         if
+                         "interaction." in field})
+            for field in user_text_fields:
+                if "interaction." in field:
+                    df[field] = df[field].fillna('')
+
+            # concat and move the user/item text fields to user and item info:
+            sort_reviews = None
+            if len(user_text_fields) > 0:
+                if 'user_item_text_choice' in config and len(config['user_item_text_choice']) > 0:
+                    sort_reviews = config['user_item_text_choice']
+
             ## USER:
             # This code works for user text fields from interaction and item file
             user_item_text_fields = [field for field in user_text_fields if "item." in field]
