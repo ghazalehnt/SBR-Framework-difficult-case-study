@@ -64,8 +64,7 @@ def main(config_file, given_user_text=None, given_item_text=None, calc_which=Non
         user_prec_path = os.path.join(config['dataset']['dataset_path'], f'precomputed_reps{f"_MF-{embedding_dim}" if CF_model_weights is not None else ""}',
                                       f"size{config['dataset']['user_chunk_size']}_"
                                       f"cs-{config['dataset']['case_sensitive']}_"
-                                      f"nn-{config['dataset']['normalize_negation']}_"
-                                      f"{config['dataset']['limit_training_data'] if len(config['dataset']['limit_training_data']) > 0 else 'no-limit'}")
+                                      f"nn-{config['dataset']['normalize_negation']}")
         print(user_prec_path)
         os.makedirs(user_prec_path, exist_ok=True)
         user_id_embedding = None
@@ -82,10 +81,7 @@ def main(config_file, given_user_text=None, given_item_text=None, calc_which=Non
                         f"tb{config['model']['tune_BERT']}_" \
                         f"cf{config['model']['use_CF']}_" \
                         f"{'-'.join(config['dataset']['user_text'])}_" \
-                        f"{config['dataset']['user_item_text_choice']}_" \
-                        f"{config['dataset']['user_item_text_tie_breaker'] if config['dataset']['user_text_filter'] in ['', 'item_sentence_SBERT'] else ''}_" \
-                        f"{config['dataset']['user_text_filter'] if len(config['dataset']['user_text_filter']) > 0 else 'no-filter'}" \
-                        f"{'_i' + '-'.join(config['dataset']['item_text']) if config['dataset']['user_text_filter'] in ['item_sentence_SBERT'] else ''}" \
+                        f"{config['dataset']['user_text_filter']}" \
                         f".pkl"
 
         if os.path.exists(os.path.join(user_prec_path, user_rep_file)):
@@ -104,8 +100,8 @@ def main(config_file, given_user_text=None, given_item_text=None, calc_which=Non
         item_prec_path = os.path.join(config['dataset']['dataset_path'], f'precomputed_reps{f"_MF-{embedding_dim}" if CF_model_weights is not None else ""}',
                                       f"size{config['dataset']['item_chunk_size']}_"
                                       f"cs-{config['dataset']['case_sensitive']}_"
-                                      f"nn-{config['dataset']['normalize_negation']}_"
-                                      f"{config['dataset']['limit_training_data'] if len(config['dataset']['limit_training_data']) > 0 else 'no-limit'}")
+                                      f"nn-{config['dataset']['normalize_negation']}")
+
         print(item_prec_path)
         os.makedirs(item_prec_path, exist_ok=True)
         item_id_embedding = None

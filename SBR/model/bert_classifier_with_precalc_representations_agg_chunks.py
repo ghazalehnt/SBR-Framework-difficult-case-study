@@ -59,18 +59,14 @@ class ClassifierUserTextProfileItemTextProfilePrecalculatedAggChunks(torch.nn.Mo
         prec_path = os.path.join(dataset_config['dataset_path'], f'precomputed_reps{cf_emb_dim}',
                                  f"size{dataset_config['user_chunk_size']}_"
                                  f"cs-{dataset_config['case_sensitive']}_"
-                                 f"nn-{dataset_config['normalize_negation']}_"
-                                 f"{dataset_config['limit_training_data'] if len(dataset_config['limit_training_data']) > 0 else 'no-limit'}")
+                                 f"nn-{dataset_config['normalize_negation']}")
         user_rep_file = f"user_representation_" \
                         f"{model_config['agg_strategy']}_" \
                         f"id{model_config['append_id']}_" \
                         f"tb{model_config['tune_BERT']}_" \
                         f"cf{model_config['use_CF']}_" \
                         f"{'-'.join(dataset_config['user_text'])}_" \
-                        f"{dataset_config['user_item_text_choice']}_" \
-                        f"{dataset_config['user_item_text_tie_breaker'] if dataset_config['user_text_filter'] in ['', 'item_sentence_SBERT'] else ''}_" \
-                        f"{dataset_config['user_text_filter'] if len(dataset_config['user_text_filter']) > 0 else 'no-filter'}" \
-                        f"{'_i' + '-'.join(dataset_config['item_text']) if dataset_config['user_text_filter'] in ['item_sentence_SBERT'] else ''}" \
+                        f"{dataset_config['user_text_filter']}" \
                         f".pkl"
         if os.path.exists(os.path.join(prec_path, user_rep_file)):
             user_chunk_reps_dict = torch.load(os.path.join(prec_path, user_rep_file), map_location=torch.device('cpu'))
@@ -88,8 +84,7 @@ class ClassifierUserTextProfileItemTextProfilePrecalculatedAggChunks(torch.nn.Mo
         prec_path = os.path.join(dataset_config['dataset_path'], f'precomputed_reps{cf_emb_dim}',
                                  f"size{dataset_config['item_chunk_size']}_"
                                  f"cs-{dataset_config['case_sensitive']}_"
-                                 f"nn-{dataset_config['normalize_negation']}_"
-                                 f"{dataset_config['limit_training_data'] if len(dataset_config['limit_training_data']) > 0 else 'no-limit'}")
+                                 f"nn-{dataset_config['normalize_negation']}")
         item_rep_file = f"item_representation_" \
                         f"{model_config['agg_strategy']}_" \
                         f"id{model_config['append_id']}_" \

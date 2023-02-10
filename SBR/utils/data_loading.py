@@ -497,7 +497,7 @@ def load_split_dataset(config, for_precalc=False):
     keep_fields.extend([field[field.index("item.") + len("item."):] for field in user_text_fields if "item." in field])
     keep_fields = list(set(keep_fields))
     tie_breaker = None
-    if len(user_text_fields) > 0 and config['user_item_text_tie_breaker'] != "":
+    if len(user_text_fields) > 0 and 'user_item_text_tie_breaker' in config and config['user_item_text_tie_breaker'] != "":
         if config['user_item_text_tie_breaker'].startswith("item."):
             tie_breaker = config['user_item_text_tie_breaker']
             tie_breaker = tie_breaker[tie_breaker.index("item.") + len("item."):]
@@ -560,9 +560,10 @@ def load_split_dataset(config, for_precalc=False):
                 df[field] = df[field].fillna('')
 
         # concat and move the user/item text fields to user and item info:
-        sort_reviews = ""
+        sort_reviews = None
         if len(user_text_fields) > 0:
-            sort_reviews = config['user_item_text_choice']
+            if 'user_item_text_choice' in config and len(config['user_item_text_choice']) > 0:
+                sort_reviews = config['user_item_text_choice']
         # text profile:
         if sp == 'train':
             ## USER:
@@ -589,7 +590,7 @@ def load_split_dataset(config, for_precalc=False):
                 # before sorting them based on rating, etc., let's append each row's field together (e.g. title. genres. review.)
                 temp['text'] = temp[user_item_inter_text_fields].agg('. '.join, axis=1)
 
-                if sort_reviews == "nothing":
+                if sort_reviews is None:
                     temp = temp.groupby(INTERNAL_USER_ID_FIELD)['text']
                 else:
                     if sort_reviews == "rating_sorted" or sort_reviews.startswith("pos_rating_sorted_"):
@@ -629,7 +630,7 @@ def load_split_dataset(config, for_precalc=False):
                 # before sorting them based on rating, etc., let's append each row's field together
                 temp['text'] = temp[item_user_inter_text_fields].agg('. '.join, axis=1)
 
-                if sort_reviews == "nothing":
+                if sort_reviews is None:
                     temp = temp.groupby(INTERNAL_ITEM_ID_FIELD)['text'].apply('. '.join).reset_index()
                 else:
                     if sort_reviews == "rating_sorted" or sort_reviews.startswith("pos_rating_sorted_"):
