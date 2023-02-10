@@ -1,0 +1,37 @@
+{
+    "dataset": {
+        "name": "Amazon",
+        "dataset_path": "TODO",
+        "binary_interactions": true,
+        "relevance_level": 1,
+        "train_batch_size": 64,
+        "eval_batch_size": 4096,
+        "user_text": [
+	    "item.title",
+	    "item.category",
+	    "interaction.summary",
+	    "interaction.reviewText"
+	],
+        "item_text": [
+	    "item.title",
+	    "item.category",
+	    "item.description"	    
+        ],
+        "user_text_filter": "random_sentence",
+        "case_sensitive": false,
+        "normalize_negation": true,
+        "user_chunk_size": 512,
+        "item_chunk_size": 512,
+      	"load_tokenized_text_in_batch": true,
+	"load_user_item_text": true,
+        "dataloader_num_workers": 8
+    },
+    "model": {
+        "pretrained_model": "bert-base-uncased",
+        "agg_strategy": "mean_last",
+        "append_id": false,
+        "tune_BERT": false,
+        "use_CF": false,
+        "precalc_batch_size": 1
+    }
+}

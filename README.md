@@ -10,7 +10,11 @@
 
 
 #### Pre-compute user and item textual representations:
+After editing configs/precompute.json file by adding the dataset_path, run the following python scripts:
+python precompute_user_item_chunk_reps_no_prec.py --config_file configs/precompute.json --which user;
+python precompute_user_item_chunk_reps_no_prec.py --config_file configs/precompute.json --which item
 
+For BERT+CF model, you need to have a trained CF model and edit config/precompute_cf.json and run the scripts using the mentioned config file.
 
 #### Train:
 

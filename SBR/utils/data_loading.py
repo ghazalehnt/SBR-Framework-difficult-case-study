@@ -673,7 +673,7 @@ def load_split_dataset(config, for_precalc=False):
             item_info['text'] = item_info['text'].apply(str.lower)
         if config['normalize_negation']:
             item_info['text'] = item_info['text'].replace("n\'t", " not", regex=True)
-    if config["training_neg_sampling_strategy"] == "genres":
+    if not for_precalc and config["training_neg_sampling_strategy"] == "genres":
         if config["name"] == "Amazon":
             if 'category' not in item_info.columns:
                 item_info['category'] = item_info['item.category']
