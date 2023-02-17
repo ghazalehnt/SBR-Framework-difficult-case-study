@@ -687,74 +687,78 @@ def load_split_dataset(config, for_precalc=False):
 
     # loading negative samples for eval sets: I used to load them in a collatefn, but, because batch=101 does not work for evaluation for BERT-based models
     user_item_sim = None
-    if not for_precalc and 'validation_neg_sampling_strategy' in config and\
-            config['validation_neg_sampling_strategy'].startswith("f:"):
-        label_weight = 0
-        if "-" in config['validation_neg_sampling_strategy']:
-            fname = config['validation_neg_sampling_strategy'][2:config['validation_neg_sampling_strategy'].index("-")]
-            label_weight_name = config['validation_neg_sampling_strategy'][config['validation_neg_sampling_strategy'].index("-")+1:]
-            if label_weight_name.startswith("w_CF_dot_"):
-                label_weight = None
-                oldmax = int(label_weight_name[label_weight_name.rindex("_")+1:])
-                oldmin = int(label_weight_name[label_weight_name.index("w_CF_dot_")+len("w_CF_dot_"):label_weight_name.rindex("_")])
-                sim_st = "dot"
-                user_item_sim = pickle.load(open(join(config['dataset_path'], f"eval_user_item_CF_sim_{sim_st}_scaled_{oldmin}-{oldmax}.pkl"), 'rb'))
+    if not for_precalc and 'validation_neg_sampling_strategy' in config:
+        if config['validation_neg_sampling_strategy'].startswith("f:"):
+            label_weight = 0
+            if "-" in config['validation_neg_sampling_strategy']:
+                fname = config['validation_neg_sampling_strategy'][2:config['validation_neg_sampling_strategy'].index("-")]
+                label_weight_name = config['validation_neg_sampling_strategy'][config['validation_neg_sampling_strategy'].index("-")+1:]
+                if label_weight_name.startswith("w_CF_dot_"):
+                    label_weight = None
+                    oldmax = int(label_weight_name[label_weight_name.rindex("_")+1:])
+                    oldmin = int(label_weight_name[label_weight_name.index("w_CF_dot_")+len("w_CF_dot_"):label_weight_name.rindex("_")])
+                    sim_st = "dot"
+                    user_item_sim = pickle.load(open(join(config['dataset_path'], f"eval_user_item_CF_sim_{sim_st}_scaled_{oldmin}-{oldmax}.pkl"), 'rb'))
+                else:
+                    raise NotImplementedError(f"{label_weight} not implemented")
             else:
-                raise NotImplementedError(f"{label_weight} not implemented")
+                fname = config['validation_neg_sampling_strategy'][2:]
+            negs = pd.read_csv(join(config['dataset_path'], fname+".csv"), dtype=str)
+            if label_weight is not None:
+                negs['label'] = label_weight
+            else:
+                labels = []
+                if label_weight_name.startswith("w_CF_dot_"):
+                    for user, unlabeled_item in zip(negs['user_id'], negs['item_id']):
+                        labels.append(user_item_sim[user][unlabeled_item])
+                negs['label'] = labels
+            negs = negs.merge(user_info[["user_id", INTERNAL_USER_ID_FIELD]], "left", on="user_id")
+            negs = negs.merge(item_info[["item_id", INTERNAL_ITEM_ID_FIELD]], "left", on="item_id")
+            negs = negs.drop(columns=["user_id", "item_id"])
+            if "ref_item" in negs.columns:
+                negs = negs.drop(columns=["ref_item"])
+            split_datasets['validation'] = pd.concat([split_datasets['validation'], negs])
+            split_datasets['validation'] = split_datasets['validation'].sort_values(INTERNAL_USER_ID_FIELD).reset_index().drop(columns=['index'])
         else:
-            fname = config['validation_neg_sampling_strategy'][2:]
-        negs = pd.read_csv(join(config['dataset_path'], fname+".csv"), dtype=str)
-        if label_weight is not None:
-            negs['label'] = label_weight
-        else:
-            labels = []
-            if label_weight_name.startswith("w_CF_dot_"):
-                for user, unlabeled_item in zip(negs['user_id'], negs['item_id']):
-                    labels.append(user_item_sim[user][unlabeled_item])
-            negs['label'] = labels
-        negs = negs.merge(user_info[["user_id", INTERNAL_USER_ID_FIELD]], "left", on="user_id")
-        negs = negs.merge(item_info[["item_id", INTERNAL_ITEM_ID_FIELD]], "left", on="item_id")
-        negs = negs.drop(columns=["user_id", "item_id"])
-        if "ref_item" in negs.columns:
-            negs = negs.drop(columns=["ref_item"])
-        split_datasets['validation'] = pd.concat([split_datasets['validation'], negs])
-        split_datasets['validation'] = split_datasets['validation'].sort_values(INTERNAL_USER_ID_FIELD).reset_index().drop(columns=['index'])
+            print(f"validation neg strategy not a file: {config['validation_neg_sampling_strategy']}")
 
-    if not for_precalc and 'test_neg_sampling_strategy' in config and \
-            config['test_neg_sampling_strategy'].startswith("f:"):
-        label_weight = 0
-        if "-" in config['test_neg_sampling_strategy']:
-            fname = config['test_neg_sampling_strategy'][2:config['test_neg_sampling_strategy'].index("-")]
-            label_weight_name = config['test_neg_sampling_strategy'][
-                                config['test_neg_sampling_strategy'].index("-") + 1:]
-            if label_weight_name.startswith("w_CF_dot"):
-                label_weight = None
-                oldmax = int(label_weight_name[label_weight_name.rindex("_")+1:])
-                oldmin = int(label_weight_name[label_weight_name.index("w_CF_dot_")+len("w_CF_dot_"):label_weight_name.rindex("_")])
-                sim_st = "dot"
-                if user_item_sim is None:
-                    user_item_sim = pickle.load(open(
-                        join(config['dataset_path'], f"eval_user_item_CF_sim_{sim_st}_scaled_{oldmin}-{oldmax}.pkl"), 'rb'))
+    if not for_precalc and 'test_neg_sampling_strategy' in config:
+        if config['test_neg_sampling_strategy'].startswith("f:"):
+            label_weight = 0
+            if "-" in config['test_neg_sampling_strategy']:
+                fname = config['test_neg_sampling_strategy'][2:config['test_neg_sampling_strategy'].index("-")]
+                label_weight_name = config['test_neg_sampling_strategy'][
+                                    config['test_neg_sampling_strategy'].index("-") + 1:]
+                if label_weight_name.startswith("w_CF_dot"):
+                    label_weight = None
+                    oldmax = int(label_weight_name[label_weight_name.rindex("_")+1:])
+                    oldmin = int(label_weight_name[label_weight_name.index("w_CF_dot_")+len("w_CF_dot_"):label_weight_name.rindex("_")])
+                    sim_st = "dot"
+                    if user_item_sim is None:
+                        user_item_sim = pickle.load(open(
+                            join(config['dataset_path'], f"eval_user_item_CF_sim_{sim_st}_scaled_{oldmin}-{oldmax}.pkl"), 'rb'))
+                else:
+                    raise NotImplementedError(f"{label_weight} not implemented")
             else:
-                raise NotImplementedError(f"{label_weight} not implemented")
+                fname = config['test_neg_sampling_strategy'][2:]
+            negs = pd.read_csv(join(config['dataset_path'], fname+".csv"), dtype=str)
+            if label_weight is not None:
+                negs['label'] = label_weight
+            else:
+                labels = []
+                if label_weight_name.startswith("w_CF_dot_"):
+                    for user, unlabeled_item in zip(negs['user_id'], negs['item_id']):
+                        labels.append(user_item_sim[user][unlabeled_item])
+                negs['label'] = labels
+            negs = negs.merge(user_info[["user_id", INTERNAL_USER_ID_FIELD]], "left", on="user_id")
+            negs = negs.merge(item_info[["item_id", INTERNAL_ITEM_ID_FIELD]], "left", on="item_id")
+            negs = negs.drop(columns=["user_id", "item_id"])
+            if "ref_item" in negs.columns:
+                negs = negs.drop(columns=["ref_item"])
+            split_datasets['test'] = pd.concat([split_datasets['test'], negs])
+            split_datasets['test'] = split_datasets['test'].sort_values(INTERNAL_USER_ID_FIELD).reset_index().drop(columns=['index'])
         else:
-            fname = config['test_neg_sampling_strategy'][2:]
-        negs = pd.read_csv(join(config['dataset_path'], fname+".csv"), dtype=str)
-        if label_weight is not None:
-            negs['label'] = label_weight
-        else:
-            labels = []
-            if label_weight_name.startswith("w_CF_dot_"):
-                for user, unlabeled_item in zip(negs['user_id'], negs['item_id']):
-                    labels.append(user_item_sim[user][unlabeled_item])
-            negs['label'] = labels
-        negs = negs.merge(user_info[["user_id", INTERNAL_USER_ID_FIELD]], "left", on="user_id")
-        negs = negs.merge(item_info[["item_id", INTERNAL_ITEM_ID_FIELD]], "left", on="item_id")
-        negs = negs.drop(columns=["user_id", "item_id"])
-        if "ref_item" in negs.columns:
-            negs = negs.drop(columns=["ref_item"])        
-        split_datasets['test'] = pd.concat([split_datasets['test'], negs])
-        split_datasets['test'] = split_datasets['test'].sort_values(INTERNAL_USER_ID_FIELD).reset_index().drop(columns=['index'])
+            print(f"test neg strategy not a file: {config['test_neg_sampling_strategy']}")
 
     for split in split_datasets.keys():
         split_datasets[split] = Dataset.from_pandas(split_datasets[split], preserve_index=False)
