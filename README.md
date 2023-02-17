@@ -21,3 +21,6 @@ After editing configs/bert5_uniform.json or other config files with different tr
 python main.py --config_file configs/configs/bert5_uniform.json --op train;
 
 #### Evaluate:
+To run the test run the following script:
+python main.py --result_folder <PATH_TO_EXP_RESULT> --op test --testtime_test_neg_strategy f:<FILENAME_EXAMPLE:test_negatives_profile_based_evaluation_100>;
+
