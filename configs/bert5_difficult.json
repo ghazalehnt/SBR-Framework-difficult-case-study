@@ -1,0 +1,83 @@
+{
+    "dataset": {
+        "name": "Amazon",
+        "dataset_path": "TODO",
+        "binary_interactions": true,
+        "relevance_level": 1,
+        "train_batch_size": 512,
+        "eval_batch_size": 4096,
+        "user_text": [
+		"item.title",
+		"item.category",
+		"interaction.summary",
+		"interaction.reviewText"
+        ],
+        "item_text": [
+		"item.title",
+		"item.category",
+		"item.description"
+        ],
+        "max_num_chunks_user": 5,
+        "max_num_chunks_item": 5,
+        "user_item_text_choice": "pos_rating_sorted_3",
+        "user_item_text_tie_breaker": "",
+        "user_text_filter": "random_sentence",
+        "case_sensitive": false,
+        "normalize_negation": true,
+        "user_chunk_size": 512,
+	"item_chunk_size": 512,
+	"load_tokenized_text_in_batch": false,
+	"load_user_item_text": false,
+        "training_neg_sampling_strategy": "genres",
+        "training_neg_samples": 4,
+        "validation_neg_sampling_strategy": "f:validation_negatives_profile_based_evaluation_20",
+        "dataloader_num_workers": 8
+    },
+    "trainer": {
+        "optimizer": "Adam",
+	"lr": 0.0004,
+	"wd": 1e-08,
+	"epochs": 100,
+	"loss_fn": "BCE",
+        "early_stopping_patience": 10,
+	"valid_metric": "valid_ndcg_cut_10",
+	"sigmoid_output": true
+    },
+    "model": {
+        "name": "VanillaBERT_precalc_with_ffn",
+        "pretrained_model": "bert-base-uncased",
+        "agg_strategy": "mean_last",
+        "chunk_agg_strategy": "max_pool",
+        "append_id": false,
+        "tune_BERT": false,
+        "use_CF": false,
+        "freeze_prec_reps": true,
+        "precalc_batch_size": 1,
+        "similarity": "dot_product",
+	"k1": 400,
+	"k2": 400
+    },
+    "experiment_root": "TODO",
+    "params_in_exp_dir": [
+        "model.use_CF",
+        "model.similarity",
+	"model.k1",
+	"model.k2",
+	"trainer.sigmoid_output",
+	"trainer.lr",
+	"trainer.loss_fn",
+        "dataset.train_batch_size",
+        "dataset.eval_batch_size",
+        "dataset.validation_neg_sampling_strategy",
+        "dataset.max_num_chunks_user",
+        "dataset.max_num_chunks_item",
+        "model.chunk_agg_strategy",
+        "model.agg_strategy",
+        "dataset.user_text_filter",
+        "dataset.case_sensitive",
+        "dataset.normalize_negation",
+        "dataset.user_item_text_tie_breaker",
+	"dataset.user_text",
+	"dataset.item_text"
+    ]
+}

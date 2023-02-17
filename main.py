@@ -40,11 +40,11 @@ def main(op, config_file=None, result_folder=None, given_test_neg_file=None,
             p2 = param[param.index(".")+1:]
             if param == "dataset.validation_neg_sampling_strategy" and config[p1][p2].startswith("f:"):
                 temp = config[p1][p2]
-                temp = temp[temp.index("f:validation_neg_")+len("f:validation_neg_"):]
+                temp = temp[temp.index("f:validation_negatives_")+len("f:validation_negatives_"):]
                 exp_dir_params.append(f"f-{temp}")
             elif param == "dataset.test_neg_sampling_strategy" and config[p1][p2].startswith("f:"):
                 temp = config[p1][p2]
-                temp = temp[temp.index("f:test_neg_")+len("f:test_neg_"):]
+                temp = temp[temp.index("f:test_negatives_")+len("f:test_negatives_"):]
                 exp_dir_params.append(f"f-{temp}")
             elif isinstance(config[p1][p2], list):
                 if p2 in ["item_text", "user_text"]:
@@ -106,7 +106,7 @@ if __name__ == '__main__':
     parser.add_argument('--train_batch_size', default=None, help='train_batch_size')
     parser.add_argument('--user_text', default=None, help='user_text (tg,tgr,tc,tcsr)')
     parser.add_argument('--item_text', default=None, help='item_text (tg,tgd,tc,tcd)')
-    parser.add_argument('--op', type=str, help='operation train/test/trainonly')
+    parser.add_argument('--op', type=str, help='operation train/test')
     args, _ = parser.parse_known_args()
 
     if args.op in ["train"]:
@@ -114,7 +114,7 @@ if __name__ == '__main__':
             raise ValueError(f"Config file does not exist: {args.config_file}")
         if args.result_folder:
             raise ValueError(f"OP==train does not accept result_folder")
-        if args.testtime_validation_neg_strategy or args.testtime_test_neg_strategy:
+        if args.testtime_test_neg_strategy:
             raise ValueError(f"OP==train does not accept test-time eval neg strategies.")
         main(op=args.op, config_file=args.config_file,
              given_lr=float(args.trainer_lr) if args.trainer_lr is not None else args.trainer_lr,
