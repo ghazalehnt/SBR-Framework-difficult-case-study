@@ -2,10 +2,6 @@
     "dataset": {
         "name": "Amazon",
         "dataset_path": "TODO",
-        "binary_interactions": true,
-        "relevance_level": 1,
-        "train_batch_size": 64,
-        "eval_batch_size": 4096,
         "user_text": [
 	    "item.title",
 	    "item.category",
@@ -23,7 +19,7 @@
         "user_chunk_size": 512,
         "item_chunk_size": 512,
       	"load_tokenized_text_in_batch": true,
-	"load_user_item_text": true,
+        "load_user_item_text": true,
         "dataloader_num_workers": 8
     },
     "model": {

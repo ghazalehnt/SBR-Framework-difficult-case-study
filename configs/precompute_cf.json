@@ -2,10 +2,6 @@
     "dataset": {
         "name": "Amazon",
         "dataset_path": "TODO",
-        "binary_interactions": true,
-        "relevance_level": 1,
-        "train_batch_size": 64,
-        "eval_batch_size": 4096,
         "user_text": [
 	    "item.title",
 	    "item.category",

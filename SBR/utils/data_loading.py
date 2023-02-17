@@ -186,7 +186,8 @@ def load_data(config, pretrained_model, for_precalc=False):
                                          collate_fn=test_collate_fn,
                                          num_workers=config['dataloader_num_workers'])
 
-    return train_dataloader, validation_dataloader, test_dataloader, user_info, item_info, config['relevance_level'], return_padding_token
+    return train_dataloader, validation_dataloader, test_dataloader, user_info, item_info, \
+           config['relevance_level'] if 'relevance_level' in config else None, return_padding_token
 
 
 class CollateOriginalDataPad(object):
